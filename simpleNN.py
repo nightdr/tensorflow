@@ -25,11 +25,22 @@ x = tf.placeholder(tf.float32, [None, 2], name = "x") # x and y inputs
 y = tf.placeholder(tf.float32, [None, 2], name = "labels") # z output as one hot array
 
 # want model to output either 0 or 1
+"""
+
 W1 = tf.Variable(tf.zeros([2, 2]), name = "W1")
 b1 = tf.Variable(tf.zeros([2]), name = "B2")
 
 W2 = tf.Variable(tf.zeros([2, 2]), name = "W2")
 b2 = tf.Variable(tf.zeros([2]), name = "B2")
+
+"""
+
+W1 = tf.Variable(tf.random_normal([2, 2]), name = "W1")
+b1 = tf.Variable(tf.random_normal([2]), name = "B2")
+
+W2 = tf.Variable(tf.random_normal([2, 2]), name = "W2")
+b2 = tf.Variable(tf.random_normal([2]), name = "B2")
+
 
 # tf.summary.histogram("W", W)
 # tf.summary.histogram("b", b)
