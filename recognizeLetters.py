@@ -1,86 +1,65 @@
 import pandas as pd
+import numpy as np
 import tensorflow as tf
 from PIL import Image
 
 # Hyper Parameters
 learning_rate = 0.1
-training_epochs = 70
+training_epochs = 1000
 display_step = 10
 
 
 # fetch and format data
-inputX = []
 
-for i in range(1, 27):
+def getData(folder):
 
-    im = Image.open("C:\\Users\\David\\Desktop\\Letter Grid\\Letters\\Times\\%d.png" % i)
+    data = []
 
-    imgData = list(im.getdata())
+    for i in range(1, 27):
 
-    avgList = []
+        im = Image.open("C:\\Users\\David\\Desktop\\Letter Grid\\Letters\\%s\\%d.png" % (folder, i))
 
-    for index in range(0, len(imgData)):
-        r, g, b = imgData[index]
-        avg = int((r + g + b) / 3)
-        avgList.append(avg)
+        imgData = list(im.getdata())
 
-    inputX.append(avgList)
+        avgList = []
 
-print(inputX)
+        for index in range(0, len(imgData)):
+            r, g, b = imgData[index]
+            avg = int((r + g + b) / 3)
+            avgList.append(avg)
+
+        data.append(avgList)
+
+    return data
 
 # format labels
+def oneHotAlphabet():
+    df = pd.read_csv("C:/Users/David/Desktop/Letter Grid/labels.csv")
 
-df = pd.read_csv("C:/Users/David/Desktop/Letter Grid/labels.csv")
+    derivedLabels = df.loc[:, "A"].as_matrix()
 
-derivedLabels = df.loc[:, "A"].as_matrix()
+    alphabet = 'abcdefghijklmnopqrstuvwxyz'
 
-alphabet = 'abcdefghijklmnopqrstuvwxyz'
+    # converts a -> 0, b -> 1, etc.
+    char_to_int = dict((c, i) for i, c in enumerate(derivedLabels))
 
-# converts a -> 0, b -> 1, etc.
-char_to_int = dict((c, i) for i, c in enumerate(derivedLabels))
+    stringInts = [char_to_int[char] for char in alphabet]
 
-stringInts = [char_to_int[char] for char in alphabet]
-
-inputY = tf.Session().run(tf.one_hot(stringInts, 26))
-
-print(inputY)
+    return(tf.Session().run(tf.one_hot(stringInts, 26)))
 
 # training data
 
-# fetch and format data
-testX = []
+inputXs = getData("Times") + getData("Georgia") + getData("Arial")
+inputYs = np.concatenate([oneHotAlphabet(), oneHotAlphabet(), oneHotAlphabet()])
 
-for i in range(1, 27):
+training_data = list(zip(inputXs, inputYs))
 
-    im = Image.open("C:\\Users\\David\\Desktop\\Letter Grid\\Letters\\Arial\\%d.png" % i)
 
-    imgData = list(im.getdata())
-
-    avgList = []
-
-    for index in range(0, len(imgData)):
-        r, g, b = imgData[index]
-        avg = int((r + g + b) / 3)
-        avgList.append(avg)
-
-    testX.append(avgList)
+testX = getData("Arial")
 
 print(testX)
 
-# format labels
-
-df = pd.read_csv("C:/Users/David/Desktop/Letter Grid/labels.csv")
-
-derivedLabels = df.loc[:, "A"].as_matrix()
-
-alphabet = 'abcdefghijklmnopqrstuvwxyz'
-
-# converts a -> 0, b -> 1, etc.
-char_to_int = dict((c, i) for i, c in enumerate(derivedLabels))
-
-stringInts = [char_to_int[char] for char in alphabet]
-
-testY = tf.Session().run(tf.one_hot(stringInts, 26))
+testY = oneHotAlphabet()
 
 print(testY)
 
@@ -105,6 +84,7 @@ pred = tf.nn.softmax(logits)
 
 
 # cost function
+
 with tf.name_scope("cost"):
     cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels = y, logits = logits))
 
@@ -125,10 +105,10 @@ with tf.Session() as sess:
     merged_summary = tf.summary.merge_all()
 
     for epoch in range(training_epochs):
-        sess.run(optimizer, feed_dict={x: inputX, y: inputY})
+        sess.run(optimizer, feed_dict={x: inputXs, y: inputYs})
 
         if epoch % display_step == 0:
-            outCost = sess.run(cost, feed_dict={x: inputX, y: inputY})
+            outCost = sess.run(cost, feed_dict={x: inputXs, y: inputYs})
             outCost = sess.run(tf.reduce_mean(outCost))
             print("step: %04d" % epoch, "cost =  %.9f" % outCost)
             # s = sess.run(merged_summary, feed_dict={x: inputX, y: inputY})
@@ -136,7 +116,7 @@ with tf.Session() as sess:
 
     print("Done")
 
-    finalCost = sess.run(cost, feed_dict={x: inputX, y: inputY})
+    finalCost = sess.run(cost, feed_dict={x: inputXs, y: inputYs})
     finalCost = sess.run(tf.reduce_mean(finalCost))
 
     print("Final Cost = ", finalCost)
@@ -146,12 +126,12 @@ with tf.Session() as sess:
 
     # Calculate accuracy
     correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(y, 1))
-    print(sess.run(correct_prediction, feed_dict= {x: inputX, y: inputY}))
-    accuracy = tf.reduce_mean(tf.cast(sess.run(correct_prediction, feed_dict= {x: inputX, y: inputY}), tf.float32))
-    print("Accuracy:", accuracy.eval({x: inputX, y: inputY}))
+    print(sess.run(correct_prediction, feed_dict= {x: inputXs, y: inputYs}))
+    accuracy = tf.reduce_mean(tf.cast(sess.run(correct_prediction, feed_dict= {x: inputXs, y: inputYs}), tf.float32))
+    print("Accuracy:", accuracy.eval({x: inputXs, y: inputYs}))
 
     #print(sess.run(pred, feed_dict= {x: inputX}))
-    print(sess.run(tf.argmax(pred, 1), feed_dict = {x: inputX}))
+    print(sess.run(tf.argmax(pred, 1), feed_dict = {x: inputXs}))
 
     print(sess.run(correct_prediction, feed_dict= {x: testX, y: testY}))
     accuracy = tf.reduce_mean(tf.cast(sess.run(correct_prediction, feed_dict= {x: testX, y: testY}), tf.float32))

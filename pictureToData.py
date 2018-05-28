@@ -1,20 +1,23 @@
 from PIL import Image
+def getData(folder):
 
-data = []
+    data = []
 
-for i in range(1, 27):
+    for i in range(1, 27):
 
-    im = Image.open("C:\\Users\\David\\Desktop\\Letter Grid\\Letters\\Times\\%d.png" % i)
+        im = Image.open("C:\\Users\\David\\Desktop\\Letter Grid\\Letters\\%s\\%d.png" % (folder, i))
 
-    imgData = list(im.getdata())
+        imgData = list(im.getdata())
 
-    avgList = []
+        avgList = []
 
-    for index in range(0, len(imgData)):
-        r, g, b = imgData[index]
-        avg = int((r + g + b) / 3)
-        avgList.append(avg)
+        for index in range(0, len(imgData)):
+            r, g, b = imgData[index]
+            avg = int((r + g + b) / 3)
+            avgList.append(avg)
 
-    data.append(avgList)
+        data.append(avgList)
 
-print(data)
+    return data
+
+print(getData("Times"))
