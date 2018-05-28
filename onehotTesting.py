@@ -10,9 +10,12 @@ print(inputX)
 
 print(inputY)
 
+reshaped = tf.Session().run(tf.reshape(inputY, [4]))
 
-one_hot = [0,1,1,1]
-depth = 2
-reshaped = tf.Session().run(tf.reshape(inputY, [4, -1]))
 # print(tf.Session().run(tf.one_hot(inputY, depth)))
-print(tf.Session().run(tf.reshape(inputY, [4])))
+
+print(reshaped)
+
+one_hot = tf.Session().run(tf.one_hot(reshaped, 2))
+
+print(one_hot)
